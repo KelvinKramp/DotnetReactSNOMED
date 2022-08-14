@@ -5,17 +5,41 @@ import addConsult from "./AddConsult"
 // https://blog.logrocket.com/create-search-bar-react-from-scratch/
 
 
+
 export class NewConsult extends Component {
   static displayName = NewConsult.name;
 
   constructor(props) {
     super(props);
-    this.state = { query: "", term: "", id_reference: null, valueSearchBar: "", ptName: "", birthDate: "", gender: "" };
+    this.state = { query: "", term: "", conceptId: null, valueSearchBar: "", ptName: "", birthDate: "", gender: "", termsList: [] };
     this.setQuery = this.setQuery.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this.clickOnTerm = this.clickOnTerm.bind(this);
     this.clearSearchBar = this.clearSearchBar.bind(this);
     this.setPtName = this.setPtName.bind(this);
+    this.fetchSNOMED = this.fetchSNOMED.bind(this);
+    this.setGender = this.setGender.bind(this);
+  }
+
+  fetchSNOMED = (input) => {
+    var myHeaders = new Headers();
+    myHeaders.append("Accept", "application/json");
+    myHeaders.append("Accept-Language", "nl");
+
+    var requestOptions = {
+      method: 'GET',
+      headers: myHeaders,
+      redirect: 'follow'
+    };
+    console.log("running fetch statement")
+    fetch("https://snowstorm.test-nictiz.nl/browser/MAIN%2FSNOMEDCT-NL/descriptions?term=" + input + "&groupByConcept=false&searchMode=STANDARD&offset=0&limit=20", requestOptions)
+      .then((response) => response.json())
+      .then(data => {
+        console.log(data)
+        this.state.termsList = data.items
+        this.setState({ termsList: data.items })
+      });
+
   }
 
   setQuery(query_input) {
@@ -24,20 +48,28 @@ export class NewConsult extends Component {
     this.setState({
       query: query_input
     });
+    if (query_input.length > 10) {
+      console.log(">10")
+      this.fetchSNOMED(query_input)
+    }
+  }
+
+  setGender() {
+    document.getElementsByName("gender")
+    .forEach((radio) => {
+      if (radio.checked) {
+        this.setState({
+          gender: radio.value
+        })
+      }
+    })
+    console.log("SET GENDER FINISHED RUNNING")
+    console.log(this.state.gender)
   }
 
   onSubmit = (e) => {
     console.log("submit button pressed")
     e.preventDefault()
-    document.getElementsByName("gender")
-      .forEach((radio) => {
-        if (radio.checked) {
-          this.setState({
-            gender: radio.value
-          })
-        };
-      })
-
     addConsult(this.state.ptName, this.state.birthDate, this.state.gender, this.state.term)
   }
 
@@ -49,11 +81,16 @@ export class NewConsult extends Component {
       term: term_input
     });
     this.setState({
-      id_reference: id_input
+      conceptId: id_input
     });
     this.setState({
       query: ""
     })
+    this.setState({
+      termsList: []
+    })
+    console.log("GENDER")
+    console.log(this.state.gender)
   }
 
   clearSearchBar() {
@@ -71,6 +108,8 @@ export class NewConsult extends Component {
       birthDate: birthdate_input
     });
   }
+
+
 
   render() {
     return (
@@ -90,10 +129,10 @@ export class NewConsult extends Component {
           <div>Gender:</div>
           <div>
             <input class="form-check-input" type="radio" id="female" name="gender"
-              value="F" checked></input>
+              value="F" onClick={this.setGender}></input>
             <label for="female">Female</label>
             <input class="form-check-input" type="radio" id="male" name="gender"
-              value="M"></input>
+              value="M" onClick={this.setGender}></input>
             <label for="male">Male</label>
           </div>
           <br></br>
@@ -102,7 +141,7 @@ export class NewConsult extends Component {
             <input id="RFE" onChange={e => this.setQuery(e.target.value)} />
           </div>
 
-          {
+          {/* {
             MOCK_DATA.filter(SNOMEDTerm => {
               if (this.state.query === '') {
                 return "";
@@ -116,6 +155,16 @@ export class NewConsult extends Component {
                 <p>{term.Reference_ID}</p>
               </div>
             ))
+          } */}
+
+          {
+            (this.state.termsList.length > 0) && this.state.termsList.map((term, index) => (
+              <div className="box" onClick={() => this.clickOnTerm(term.term, term.concept.conceptId)} key={index}>
+                <p>{term.term}</p>
+                <p>{term.concept.conceptId}</p>
+              </div>
+              )
+            )
           }
 
           <br></br>
