@@ -7,7 +7,7 @@ export const searchBar = () => {
 	return (
 		<div>
 			<div>
-				<input placeholder="Enter Post Title" />
+				<input placeholder="Enter reason for encounter" />
 			</div>
 			{
 				MOCK_DATA.map((SNOMEDTerm) => (
