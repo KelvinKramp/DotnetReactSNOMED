@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
-import MOCK_DATA from "../MOCK_DATA.json";
 import addConsult from "./AddConsult"
+
+// import MOCK_DATA from "../MOCK_DATA.json";
+
 // Create searchbare native in react
 // https://blog.logrocket.com/create-search-bar-react-from-scratch/
 
@@ -11,35 +13,41 @@ export class NewConsult extends Component {
 
   constructor(props) {
     super(props);
-    this.state = { query: "", term: "", conceptId: null, valueSearchBar: "", ptName: "", birthDate: "", gender: "", termsList: [] };
-    this.setQuery = this.setQuery.bind(this);
-    this.onSubmit = this.onSubmit.bind(this);
-    this.clickOnTerm = this.clickOnTerm.bind(this);
-    this.clearSearchBar = this.clearSearchBar.bind(this);
+    this.state = { ptName: "", gender: "", birthDate: "", query: "", term: "", conceptId: null, valueSearchBar: "", termsList: [], parent: "", parentId: null, n:0 };
     this.setPtName = this.setPtName.bind(this);
-    this.fetchSNOMED = this.fetchSNOMED.bind(this);
     this.setGender = this.setGender.bind(this);
+    this.setQuery = this.setQuery.bind(this);
+    this.fetchSNOMED = this.fetchSNOMED.bind(this);
+    this.clickOnTerm = this.clickOnTerm.bind(this);
+    this.fetchSNOMParents = this.fetchSNOMParents.bind(this);
+    this.clearSearchBar = this.clearSearchBar.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
+
   }
 
-  fetchSNOMED = (input) => {
-    var myHeaders = new Headers();
-    myHeaders.append("Accept", "application/json");
-    myHeaders.append("Accept-Language", "nl");
+  setPtName(ptName_input) {
+    this.setState({
+      ptName: ptName_input
+    });
+  }
 
-    var requestOptions = {
-      method: 'GET',
-      headers: myHeaders,
-      redirect: 'follow'
-    };
-    console.log("running fetch statement")
-    fetch("https://snowstorm.test-nictiz.nl/browser/MAIN%2FSNOMEDCT-NL/descriptions?term=" + input + "&groupByConcept=false&searchMode=STANDARD&offset=0&limit=20", requestOptions)
-      .then((response) => response.json())
-      .then(data => {
-        console.log(data)
-        this.state.termsList = data.items
-        this.setState({ termsList: data.items })
-      });
+  setBirthDate(birthdate_input) {
+    this.setState({
+      birthDate: birthdate_input
+    });
+  }
 
+  setGender() {
+    document.getElementsByName("gender")
+      .forEach((radio) => {
+        if (radio.checked) {
+          this.setState({
+            gender: radio.value
+          })
+        }
+      })
+    console.log("SET GENDER FINISHED RUNNING")
+    console.log(this.state.gender)
   }
 
   setQuery(query_input) {
@@ -54,23 +62,25 @@ export class NewConsult extends Component {
     }
   }
 
-  setGender() {
-    document.getElementsByName("gender")
-    .forEach((radio) => {
-      if (radio.checked) {
-        this.setState({
-          gender: radio.value
-        })
-      }
-    })
-    console.log("SET GENDER FINISHED RUNNING")
-    console.log(this.state.gender)
-  }
+  fetchSNOMED = (input) => {
+    var myHeaders = new Headers();
+    myHeaders.append("Accept", "application/json");
+    myHeaders.append("Accept-Language", "nl");
 
-  onSubmit = (e) => {
-    console.log("submit button pressed")
-    e.preventDefault()
-    addConsult(this.state.ptName, this.state.birthDate, this.state.gender, this.state.term)
+    var requestOptions = {
+      method: 'GET',
+      headers: myHeaders,
+      redirect: 'follow'
+    };
+    console.log("running fetch function fetchSNOMED")
+    fetch("https://snowstorm.test-nictiz.nl/browser/MAIN%2FSNOMEDCT-NL/descriptions?term=" + input + "&groupByConcept=false&searchMode=STANDARD&offset=0&limit=20", requestOptions)
+      .then((response) => response.json())
+      .then(data => {
+        console.log(data)
+        // this.state.termsList = data.items
+        this.setState({ termsList: data.items })
+      });
+
   }
 
   clickOnTerm(term_input, id_input) {
@@ -89,27 +99,58 @@ export class NewConsult extends Component {
     this.setState({
       termsList: []
     })
-    console.log("GENDER")
-    console.log(this.state.gender)
+    this.fetchSNOMParents(this.state.termsList[0].concept.conceptId)
   }
+    
+fetchSNOMParents = (input) => {
+
+      var test_input = "263244000"
+      var array_conceptIds
+      var myHeaders = new Headers();
+      myHeaders.append("Accept", "application/json");
+      myHeaders.append("Accept-Language", "nl");
+      
+      var requestOptions = {
+        method: 'GET',
+        headers: myHeaders,
+        redirect: 'follow'
+      };
+      if (this.state.n < 5) {
+        console.log("recursion run number:")
+        console.log(this.state.n)
+        console.log("input for run:")
+        console.log(input)
+        this.state.n += 1
+        fetch("https://snowstorm.test-nictiz.nl/browser/MAIN%2FSNOMEDCT-NL/concepts/" + input + "/parents?form=inferred&includeDescendantCount=false", requestOptions)
+          .then((response) => response.json())
+          .then(data => {
+            var new_array = data.map(e => e.conceptId)
+            var parents = data.map(e => e.fsn.term)
+            console.log("length array")
+            console.log(data.length)
+            console.log("array of parent conceptIds")
+            console.log(new_array)
+            console.log("array of parents descriptions")
+            console.log(parents)
+            // run recursively untill n = x
+            new_array.forEach(
+              element =>
+              this.fetchSNOMParents(element)
+            )
+          });
+      }
+    }
+
 
   clearSearchBar() {
     document.getElementById('RFE').value = "";
   }
 
-  setPtName(ptName_input) {
-    this.setState({
-      ptName: ptName_input
-    });
+  onSubmit = (e) => {
+    console.log("submit button pressed")
+    e.preventDefault()
+    addConsult(this.state.ptName, this.state.birthDate, this.state.gender, this.state.term, this.state.conceptId)
   }
-
-  setBirthDate(birthdate_input) {
-    this.setState({
-      birthDate: birthdate_input
-    });
-  }
-
-
 
   render() {
     return (
@@ -163,7 +204,7 @@ export class NewConsult extends Component {
                 <p>{term.term}</p>
                 <p>{term.concept.conceptId}</p>
               </div>
-              )
+            )
             )
           }
 

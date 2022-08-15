@@ -1,6 +1,7 @@
-export default function addConsult(name, birthdate, gender, term) {
-      console.log("running add consult")
-      console.log(name, birthdate, gender, term)
+export default function addConsult(name, birthdate, gender, term, conceptId) {
+      console.log("running add consult with following data")
+      console.log(name, birthdate, gender, term, conceptId)
+
       var myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
 
@@ -8,7 +9,8 @@ export default function addConsult(name, birthdate, gender, term) {
         "name": name,
         "birthDate": birthdate,
         "gender": gender,
-        "rfe": term
+        "rfe": term,
+        "conceptId": parseInt(conceptId)
       });
 
       var requestOptions = {

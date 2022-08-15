@@ -27,7 +27,10 @@ export class FetchData extends Component {
     this.populateWeatherData();
   }
 
+
+
   static renderForecastsTable(consults) {
+    console.log(consults[1])
     return (
       <div>
       <table className='table table-striped' aria-labelledby="tabelLabel">
@@ -37,6 +40,8 @@ export class FetchData extends Component {
             <th>Birthdate</th>
             <th>Gender</th>
             <th>SNOMED description</th>
+            <th>ConceptId</th>
+            <th>Parent</th>
           </tr>
         </thead>
         <tbody>
@@ -46,6 +51,7 @@ export class FetchData extends Component {
               <td>{c.birthDate}</td>
               <td>{c.gender}</td>
               <td>{c.rfe}</td>
+              <td>{c.conceptId}</td>
             </tr>
           )}
         </tbody>
@@ -80,7 +86,7 @@ export class FetchData extends Component {
   async populateWeatherData() {
     const response = await fetch('consultationsdb');
     const data = await response.json();
-    console.log(data)
+    // console.log(data)
     this.setState({ forecasts: data, loading: false });
   }
 }
